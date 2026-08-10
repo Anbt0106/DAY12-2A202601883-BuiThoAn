@@ -61,7 +61,7 @@ jobs:
       - name: Deploy application
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --ci
+        run: railway up --ci --service "DAY12-2A202601883-BuiThoAn"
 
       - name: Smoke test
         env:
