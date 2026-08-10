@@ -28,32 +28,29 @@ class RateLimiter:
         return f"ratelimit:{user_id}"
 
     def hit_count(self, user_id: str, now: float | None = None) -> int:
-        """Số request của user trong ``WINDOW_SECONDS`` giây gần nhất.
+        """Số request của user trong ``WINDOW_SECONDS`` giây gần nhất."""
+        now_ts = now if now is not None else time.time()
+        key = self._key(user_id)
+        self.client.zremrangebyscore(key, 0, now_ts - WINDOW_SECONDS)
+        return self.client.zcard(key)
 
-        TODO (CP3):
-          1. ``now = now if now is not None else time.time()``
-          2. Xóa các entry cũ hơn cửa sổ:
-             ``self.client.zremrangebyscore(key, 0, now - WINDOW_SECONDS)``
-          3. Trả về ``self.client.zcard(key)``
-        """
-        raise NotImplementedError("TODO (CP3): cài đặt hit_count")
 
     def check(self, user_id: str, now: float | None = None) -> None:
-        """Cho qua nếu còn quota, ngược lại raise 429.
+        """Cho qua nếu còn quota, ngược lại raise 429."""
+        now = now if now is not None else time.time()
+        key = self._key(user_id)
 
-        TODO (CP3):
-          1. ``now = now if now is not None else time.time()``
-          2. Gọi ``self.hit_count(user_id, now)``.
-          3. Nếu số đó ``>= self.limit`` → raise
-             ``HTTPException(status_code=429, detail="rate limit exceeded",
-                             headers={"Retry-After": str(WINDOW_SECONDS)})``
-          4. Chưa vượt → ghi nhận request này:
-             ``self.client.zadd(key, {f"{now}:{uuid.uuid4().hex}": now})``
-             (member phải là chuỗi DUY NHẤT, nếu không hai request cùng
-             timestamp sẽ ghi đè nhau và bạn đếm thiếu)
-             rồi ``self.client.expire(key, WINDOW_SECONDS)`` để key tự dọn.
-
-        Lưu ý thứ tự: **kiểm tra trước, ghi nhận sau**. Ghi trước rồi mới đếm
-        sẽ chặn nhầm ngay ở request thứ ``limit``.
-        """
-        raise NotImplementedError("TODO (CP3): cài đặt check")
+        # 1. Dọn entry cũ
+        self.client.zremrangebyscore(key, 0, now - WINDOW_SECONDS)
+        # 2. Đếm
+        count = self.client.zcard(key)
+        # 3. Vượt quota → chặn (KHÔNG ghi nhận request bị chặn)
+        if count >= self.limit:
+            raise HTTPException(
+                status_code=429,
+                detail="rate limit exceeded",
+                headers={"Retry-After": str(WINDOW_SECONDS)},
+            )
+        # 4. Còn quota → ghi nhận (member duy nhất tránh ghi đè)
+        self.client.zadd(key, {f"{now}:{uuid.uuid4().hex}": now})
+        self.client.expire(key, WINDOW_SECONDS)
