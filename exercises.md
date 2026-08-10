@@ -6,7 +6,9 @@
 > Cách trả lời: thay dòng `> *Câu trả lời của bạn*` bằng câu trả lời.
 > `grade.py` đếm số câu đã trả lời (15 điểm cho 10 câu).
 >
-> Họ và tên: ..........................  Mã học viên: ..........................
+> Họ và tên: Bùi Thọ An
+>
+> Mã học viên: 2A202601883
 
 ---
 
@@ -16,7 +18,9 @@ Trong `Settings`, `agent_api_key` không có giá trị mặc định nên app c
 khi khởi động nếu thiếu biến môi trường. Hãy mô tả một tình huống cụ thể mà
 việc "chết sớm" này cứu bạn, so với việc để mặc định `"changeme"`.
 
-> *Câu trả lời của bạn*
+> Khi delploy ứng dụng lên prod trên cloud, nhưng quên thêm biến môi trường AGENT_API_KEY:  
+>  - Nếu để mặc định là "changeme", ứng dụng vẫn khởi động bình thường nhưng khi có kẻ tấn công hoặc bot quét API với key "changeme", họ sẽ gọi được vào LLM API làm tiêu hao ngân sách/lộ dữ liệu mà ta không hề hay biết.
+> - Nhờ cơ chế Fail-fast (không có mặc định), ứng dụng crash ngay lập tức ở bước deploy/health check fail, giúp đội ngũ nhận ra thiếu sót và bổ sung cấu hình ngay lập tức trước khi traffic người dùng đổ vào.
 
 ---
 
