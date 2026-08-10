@@ -34,7 +34,6 @@ class RateLimiter:
         self.client.zremrangebyscore(key, 0, now_ts - WINDOW_SECONDS)
         return self.client.zcard(key)
 
-
     def check(self, user_id: str, now: float | None = None) -> None:
         """Cho qua nếu còn quota, ngược lại raise 429."""
         now = now if now is not None else time.time()
